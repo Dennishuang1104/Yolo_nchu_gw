@@ -1,0 +1,3 @@
+[submodule "yolov3_pytorch"]
+	path = yolov3_pytorch
+	url = https://github.com/ws6125/yolov3_pytorch.git
