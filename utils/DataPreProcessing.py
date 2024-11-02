@@ -1,10 +1,12 @@
 import os
 import glob
 
+class DataProcessing:
+
 
 def get_filenames(kind, data_type='jpg'):
     # step 1 把Label 內.txt資料搬出來
-    txt_dir_path = f'../datasets/{kind}/Label'
+    txt_dir_path = f'../datasets/{kind}/annotations'
     jpg_dir_path = f'../datasets/{kind}/images'
     if not os.path.exists(jpg_dir_path):
         os.makedirs(jpg_dir_path)
@@ -42,9 +44,11 @@ def get_filenames(kind, data_type='jpg'):
     print(f'{kind} work done!')
 
 
+
+
+
+
+
+
 if __name__ == '__main__':
-    # get_files(data_type='jpg')
     jpg_name = get_filenames(kind='Bus')
-    # print(jpg_name)
-    # print(len(jpg_name))
-    # / Users / dennis_huang / Github_project / Yolo_nchu_gw / utils /../ datasets / Bus / Label / 20225397f642ff82.txt
