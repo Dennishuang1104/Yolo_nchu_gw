@@ -1,0 +1,7 @@
+path: ../datasets
+train: Transportation-train/images
+val: Transportation-train/images
+test: Transportation-train/images
+names:
+  0: car
+  1: bus
