@@ -419,3 +419,6 @@ def main(opt):
 if __name__ == "__main__":
     opt = parse_opt()
     main(opt)
+# from PIL import Image
+# img = Image.open('yolov3_pytorch_modules/runs/detect/exp2/Bus_878.jpg')
+# display(img)

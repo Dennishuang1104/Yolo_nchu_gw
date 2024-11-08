@@ -59,7 +59,7 @@ from utils.general import (
     check_dataset,
     check_file,
     check_git_info,
-    check_git_status,
+    # check_git_status,
     check_img_size,
     check_requirements,
     check_suffix,
@@ -649,7 +649,7 @@ def main(opt, callbacks=Callbacks()):
     """
     if RANK in {-1, 0}:
         print_args(vars(opt))
-        check_git_status()
+        # check_git_status()
         check_requirements(ROOT / "requirements.txt")
 
     # Resume (from specified or most recent last.pt)
@@ -874,4 +874,5 @@ def run(**kwargs):
 
 if __name__ == "__main__":
     opt = parse_opt()
+    # print(opt)
     main(opt)
