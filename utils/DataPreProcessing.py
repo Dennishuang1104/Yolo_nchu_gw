@@ -8,7 +8,7 @@ import glob
 class DataPreProcessing:
     def __init__(self, kind_list: list):
         self.kind_list = kind_list
-        self.counts_data = 500 # 拿500 張訓練
+        self.counts_data = 1000  # 拿500 張訓練
         self.img_type = 'jpg'
         self.dataset_path = 'datasets/'
         self.model_dataset_path = 'datasets/Transportation-train'
@@ -60,16 +60,28 @@ class DataPreProcessing:
             self.get_filenames(kind=kind)
 
     def convert_box(self, size, box):
-        # Convert VisDrone box to YOLO xywh box
-        # 將標記框框轉換成 yolo 對應的xywh
-        dw = 1. / size[0]  # 用1 當作所有
-        dh = 1. / size[1]
-        box_tuple = (box[0] + box[2] / 2) * dw, (box[1] + box[3] / 2) * dh, box[2] * dw, box[3] * dh
-        return box_tuple
+        '''
+        將絕對座標轉換為 YOLO 格式的相對座標。
+        :param size: (width, height) 圖片尺寸
+        :param box: [XMin, XMax, YMin, YMax] 絕對座標框
+        :return: [class_id, x_center, y_center, width, height] YOLO 格式
+        '''
+        image_width, image_height = size
+        x_min, y_min, x_max, y_max = box
+        # 計算中心點和寬高的相對座標
+        x_center = (x_min + x_max) / 2 / image_width
+        y_center = (y_min + y_max) / 2 / image_height
+        width = (x_max - x_min) / image_width
+        height = (y_max - y_min) / image_height
+
+        # 判斷是否有任何數值超過 1
+        if x_center > 1 or y_center > 1 or width > 1 or height > 1:
+            print("Error")
+
+        return (x_center, y_center, width, height)
 
     def visdrone2yolo(self, kind_dir):
         full_kind_dir = Path(self.dataset_path + kind_dir)
-        print(full_kind_dir)
         (full_kind_dir / 'labels').mkdir(parents=True, exist_ok=True)  # make labels directory
         # pbar = tqdm((full_kind_dir / 'annotations').glob('*.txt'), desc=f'Converting {kind_dir}')
         pbar = tqdm(
@@ -105,7 +117,6 @@ class DataPreProcessing:
                 if os.path.isdir(sub_dir):
                     # 列出該目錄中的所有檔案
                     all_files = os.listdir(sub_dir)
-
                     for i in range(1, self.counts_data):
                         if i < 10:
                             target_file = f"{category}_0{i}.txt"
@@ -151,4 +162,4 @@ class DataPreProcessing:
 
 # if __name__ == '__main__':
 #     test_ = DataPreProcessing(kind_list=['Bus', 'Car'])
-#     test_.visdrone2yolo(dataset_dir='Car')
+#     test_.combine_and_split()
