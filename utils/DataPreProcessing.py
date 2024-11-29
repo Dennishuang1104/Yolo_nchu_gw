@@ -8,14 +8,18 @@ import glob
 class DataPreProcessing:
     def __init__(self, kind_list: list):
         self.kind_list = kind_list
-        self.counts_data = 2000  # 拿500 張訓練
+        self.counts_data = 550  # 拿幾張訓練
         self.img_type = 'jpg'
+        self.file_type_list = ['images', 'labels']
         self.dataset_path = 'datasets/'
+        self.diy_dataset_path = 'datasets/LabelsDIY'
         self.model_dataset_path = 'datasets/Transportation-train'
+        self.diy_list = ["Emily", "Kuo", "Lara"]
         self.class_dict = {
             "Car": 0,
             "Bus": 1,
-            "Bike": 2
+            "Bicycle": 2,
+            "Motorcycle": 3
         }
 
     def get_filenames(self, kind):
@@ -26,16 +30,10 @@ class DataPreProcessing:
             os.makedirs(jpg_dir_path)
         if not os.path.exists(txt_dir_path):
             os.makedirs(txt_dir_path)
-        dir_path = f'../datasets/{kind}'
-        txt_directory = os.path.join(os.path.dirname(__file__), txt_dir_path)
-        for filename in os.listdir(txt_directory):
-            original_path = os.path.join(txt_dir_path, filename)
-            new_path = os.path.join(dir_path, filename)
-            os.rename(original_path, new_path)
 
         # step 2 把對應ID 取代成
         id_list = []
-        directory = os.path.join(os.path.dirname(__file__), dir_path)
+        directory = os.path.join(os.path.dirname(__file__), jpg_dir_path).replace('utils/', '')
         for idx, filename in enumerate(os.listdir(directory), start=1):
             if filename.endswith(f'.{self.img_type}'):
                 id_list.append(filename.replace(f'.{self.img_type}', ''))
@@ -47,17 +45,132 @@ class DataPreProcessing:
             jpg_filename = f"{kind}_{str(idx).zfill(2)}.jpg"
             txt_filename = f"{kind}_{str(idx).zfill(2)}.txt"
 
-            original_txt_path = os.path.join(dir_path, original_txt_name)
+            original_txt_path = os.path.join(txt_dir_path, original_txt_name)
             new_txt_path = os.path.join(txt_dir_path, txt_filename)
             os.rename(original_txt_path, new_txt_path)
 
-            original_jpg_path = os.path.join(dir_path, original_jpg_name)
+            original_jpg_path = os.path.join(jpg_dir_path, original_jpg_name)
             new_jpg_path = os.path.join(jpg_dir_path, jpg_filename)
             os.rename(original_jpg_path, new_jpg_path)
 
-    def located_datasets(self):
-        for kind in self.kind_list:
-            self.get_filenames(kind=kind)
+    def rename_kind(self, dir_name):
+        txt_dir_path = f'{self.dataset_path}/{dir_name}/labels'
+        jpg_dir_path = f'{self.dataset_path}/{dir_name}/images'
+        if os.path.exists(jpg_dir_path):
+            dir_path = f'../datasets/{dir_name}'
+            txt_directory = os.path.join(os.path.dirname(__file__), txt_dir_path)
+            for filename in os.listdir(txt_directory):
+                original_path = os.path.join(txt_dir_path, filename)
+                new_path = os.path.join(dir_path, filename)
+                os.rename(original_path, new_path)
+
+    def transfer_to_labelsdiy(self):
+        """
+        將手動標注好的檔案統一轉到LabelsDIY 裡面，並且命名規則為Name_ID 升冪排列
+        """
+        destination_dir = f"{self.dataset_path}/LabelsDIY/"
+        txt_dir_path = f'{self.dataset_path}/LabelsDIY/labels'
+        jpg_dir_path = f'{self.dataset_path}/LabelsDIY/images'
+        for t in self.file_type_list:
+            destination_type_dir = destination_dir + t
+            if not os.path.exists(destination_type_dir):
+                os.makedirs(destination_type_dir)
+            else:
+                shutil.rmtree(destination_type_dir)
+                os.makedirs(destination_type_dir, exist_ok=True)
+
+        # 依照對應的目錄做資料處理
+        for name in self.diy_list:
+            image_dir = destination_dir.replace('LabelsDIY/', f'{name}/images')
+            label_dir = destination_dir.replace('LabelsDIY/', f'{name}/labels')
+            file_list = []
+            # 防呆機制避免比數不同 造成錯誤
+            for file_name in os.listdir(image_dir):
+                filename = file_name.replace(".jpg", "")
+                file_list.append(filename)
+
+            for idx, id_ in enumerate(file_list, start=1):
+                original_jpg_name = f'{id_}.jpg'
+                original_txt_name = f'{id_}.txt'
+                jpg_filename = f"{name}_{str(idx).zfill(2)}.jpg"
+                txt_filename = f"{name}_{str(idx).zfill(2)}.txt"
+
+                original_txt_path = os.path.join(label_dir, original_txt_name)
+                new_txt_path = os.path.join(txt_dir_path, txt_filename)
+                shutil.copy(original_txt_path, new_txt_path)
+
+                original_jpg_path = os.path.join(image_dir, original_jpg_name)
+                new_jpg_path = os.path.join(jpg_dir_path, jpg_filename)
+                shutil.copy(original_jpg_path, new_jpg_path)
+
+    def process_label_file(self, input_path, output_path):
+        """
+        處理單一標記文件，將多邊形座標轉為 Bounding Box 格式。
+        """
+        with open(input_path, 'r') as infile:
+            lines = infile.readlines()
+
+        modified_lines = []
+        for line in lines:
+            elements = line.split()
+            if len(elements) < 2:
+                continue  # 跳過空行或格式不正確的行
+
+            class_id = elements[0]
+            points = list(map(float, elements[1:]))
+
+            # 提取多邊形的 (x, y) 座標
+            x_coords = points[0::2]  # 偶數索引是 x 座標
+            y_coords = points[1::2]  # 奇數索引是 y 座標
+
+            # 計算 Bounding Box
+            x_min = min(x_coords)
+            x_max = max(x_coords)
+            y_min = min(y_coords)
+            y_max = max(y_coords)
+
+            x_center = (x_min + x_max) / 2
+            y_center = (y_min + y_max) / 2
+            width = x_max - x_min
+            height = y_max - y_min
+
+            # 生成新的標記格式 , 並訂正標記錯誤的資訊
+            if int(class_id) == 2:
+                class_id = "0"
+            elif int(class_id) == 0:
+                class_id = "3"
+            bounding_box = f"{class_id} {x_center:.6f} {y_center:.6f} {width:.6f} {height:.6f}"
+            modified_lines.append(bounding_box)
+
+            # 將修改後的內容寫入輸出文件
+            with open(output_path, 'w') as outfile:
+                outfile.write("\n".join(modified_lines) + "\n")
+
+    def tf_annotation_to_bbox_batch(self):
+        labels_dir = f"{self.dataset_path}/Lara/labels"
+        labels_copy_dir = f"{self.dataset_path}/Lara/labels_copy"
+
+        labels_exists = os.path.exists(labels_dir)
+        labels_copy_exists = os.path.exists(labels_copy_dir)
+
+        # 重置資料夾
+        if labels_exists and labels_copy_exists:
+            print("`labels` 和 `labels_copy` 目錄均存在，無需執行動作。")
+        elif labels_exists and not labels_copy_exists:
+            shutil.copytree(labels_dir, labels_copy_dir)
+            shutil.rmtree(labels_dir)
+            os.makedirs(labels_dir, exist_ok=True)
+            print(f"已清空並重新建立 `{labels_dir}` 資料夾。")
+        else:
+            print(f"目錄 `{labels_dir}` 不存在，請確認資料夾配置。")
+
+        # 遍歷所有 `.txt` 文件
+        for filename in os.listdir(labels_copy_dir):
+            if filename.endswith('.txt'):
+                source_path = os.path.join(labels_copy_dir, filename)
+                target_path = os.path.join(labels_dir, filename)
+                self.process_label_file(source_path, target_path)
+                print(f"已處理文件：{source_path} -> {target_path}")
 
     def convert_box(self, size, box):
         '''
@@ -130,34 +243,20 @@ class DataPreProcessing:
                             dest_path = os.path.join(self.model_dataset_path+f"/{sub_folder}", target_file)
                             # 複製檔案
                             shutil.copy(source_path, dest_path)
+        # 把自標檔案複製到模型訓練目錄
+        source_dir = self.diy_dataset_path
+        target_dir = self.model_dataset_path
 
-    def clean_dirty_data(self):
-        bus_failed_list  = [2, 3, 5, 7, 9, 13, 16, 17, 19, 27, 29, 30, 31, 32, 40, 59, 60, 61, 64, 67, 68, 69, 70, 72, 73, 74, 77, 78, 79, 81, 82, 90, 91, 92, 101, 102, 103, 104, 108, 110, 112, 120, 122, 124, 125, 127, 130, 132, 138, 140, 142, 145, 147, 148, 151, 154, 155, 165, 169, 171, 172, 174, 175, 181, 187, 188, 189, 193, 197, 198, 200, 201, 203, 207, 210, 212, 214, 215, 216, 218, 219, 220, 222, 223, 226, 229, 230, 234, 236, 238, 239, 240, 243, 245, 247, 250, 254, 255, 257, 258, 259, 267, 270, 279, 280, 282, 283, 288, 290, 292, 293, 294, 297, 300, 301, 302, 309, 313, 318, 320, 322, 332, 333, 334, 338, 339, 342, 344, 346, 348, 349, 351, 354, 357, 358, 359, 361, 365, 368, 369, 370, 371, 378, 379, 380, 385, 387, 389, 390, 392, 393, 394, 395, 399, 409, 416, 418, 419, 423, 430, 435, 436, 441, 443, 444, 445, 446, 447, 448, 452, 454, 455, 459, 460, 461, 462, 463, 464, 465, 467, 468, 469, 470, 471, 472, 473, 478, 480, 484, 487, 488, 491, 493, 495, 496]
-        for sub_folder in ["annotations", "images", "labels"]:
-            sub_dir = os.path.join(self.dataset_path, "Transportation-train", sub_folder)
-            if os.path.isdir(sub_dir):
-                # 列出該目錄中的所有檔案
-                all_files = os.listdir(sub_dir)
-                for i in bus_failed_list:
-                    if i < 10:
-                        target_file = f"Bus_0{i}.txt"
-                    else:
-                        target_file = f"Bus_{i}.txt"
-                    if sub_folder == 'images':
-                        target_file = target_file.replace(".txt", ".jpg")
+        for t in self.file_type_list:
+            full_source_dir = source_dir + "/" + t
+            full_target_dir = target_dir + "/" + t
 
-                    if target_file in all_files:
-                        target_file_location = f'{self.model_dataset_path}/{sub_folder}/{target_file}'
-                        if os.path.exists(target_file_location):
-                            os.remove(target_file_location)
-                            print(f"{target_file_location} 已刪除。")
+            for filename in os.listdir(full_source_dir):
+                source_path = os.path.join(full_source_dir, filename)
+                target_path = os.path.join(full_target_dir, filename)
+                shutil.copy(source_path, target_path)
 
 
-            # for i in range (1, 500):
-            #     if i < 10 :
-            #
-            #
-            #     else:
 
 
 # if __name__ == '__main__':
