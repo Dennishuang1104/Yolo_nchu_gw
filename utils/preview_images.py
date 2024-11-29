@@ -16,6 +16,8 @@ def check_loop_pic_datasets(kind):
             label_path = f'../datasets/{kind}/labels/{kind}_{id_}.txt'
 
         # 讀取圖片
+        # image_path = f'../datasets/LabelsDIY/images/Lara_135.jpg'
+        # label_path = f'../datasets/LabelsDIY/labels/Lara_135.txt'
         image = Image.open(image_path)
 
         # 讀取標記資訊
