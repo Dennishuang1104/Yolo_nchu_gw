@@ -8,7 +8,7 @@ import glob
 class DataPreProcessing:
     def __init__(self, kind_list: list):
         self.kind_list = kind_list
-        self.counts_data = 550  # 拿幾張訓練
+        self.counts_data = 2500  # 拿幾張訓練
         self.img_type = 'jpg'
         self.file_type_list = ['images', 'labels']
         self.dataset_path = 'datasets/'

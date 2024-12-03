@@ -31,12 +31,13 @@ def run_training():
 
 
 def main():
-    # yolo_tackler = DataPreProcessing(kind_list=['Car', 'Bus'])
-    # yolo_tackler.visdrone2yolo('Bus')
+    yolo_tackler = DataPreProcessing(kind_list=['Car', 'Bus', "Bicycle", "Motorcycle"])
+    yolo_tackler.get_filenames(kind="Bicycle")
+    yolo_tackler.visdrone2yolo("Bicycle")
     # yolo_tackler.visdrone2yolo('Car')
     # yolo_tackler.combine_and_split()
     # yolo_tackler.clean_dirty_data()
-    run_training()
+    # run_training()
 
 
 if __name__ == '__main__':
