@@ -1,6 +1,6 @@
 train: datasets/Transportation-train/images  # 訓練集圖片目錄（相對於 path）
 val: datasets/Transportation-train/images    # 驗證集圖片目錄（相對於 path）
 
-nc: 4  # 類別數量 (car 和 bus)
+nc: 3  # 類別數量 (car 和 bus)
 
-names: ['car', 'bus', 'bicycle', 'motorcycle']  # 類別名稱列表
+names: ['car', 'bus', 'bicycle']  # 類別名稱列表
