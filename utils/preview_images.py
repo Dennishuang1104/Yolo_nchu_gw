@@ -7,7 +7,7 @@ from PIL import Image
 
 def check_loop_pic_datasets(kind):
     qa_list = []
-    for id_ in range(1, 7293):
+    for id_ in range(500, 7293):
         if id_ < 100:
             image_path = f'../datasets/{kind}/images/{kind}_0{id_}.jpg'
             label_path = f'../datasets/{kind}/labels/{kind}_0{id_}.txt'
@@ -54,5 +54,5 @@ def check_loop_pic_datasets(kind):
     print(qa_list)
 
 
-if __name__ == '__main__':
-    check_loop_pic_datasets(kind='Car')
+# if __name__ == '__main__':
+#     check_loop_pic_datasets(kind='Motorcycle')
