@@ -247,14 +247,14 @@ class DataPreProcessing:
         source_dir = self.diy_dataset_path
         target_dir = self.model_dataset_path
 
-        for t in self.file_type_list:
-            full_source_dir = source_dir + "/" + t
-            full_target_dir = target_dir + "/" + t
-
-            for filename in os.listdir(full_source_dir):
-                source_path = os.path.join(full_source_dir, filename)
-                target_path = os.path.join(full_target_dir, filename)
-                shutil.copy(source_path, target_path)
+        # for t in self.file_type_list:
+        #     full_source_dir = source_dir + "/" + t
+        #     full_target_dir = target_dir + "/" + t
+        #
+        #     for filename in os.listdir(full_source_dir):
+        #         source_path = os.path.join(full_source_dir, filename)
+        #         target_path = os.path.join(full_target_dir, filename)
+        #         shutil.copy(source_path, target_path)
 
 
 
