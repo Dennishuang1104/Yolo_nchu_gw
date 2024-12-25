@@ -119,7 +119,7 @@ def plot_images(images, targets, paths=None, fname='images.jpg', names=None, max
     if isinstance(targets, torch.Tensor):
         targets = targets.cpu().numpy()
 
-    # un-normalise
+    # Un-normalise
     if np.max(images[0]) <= 1:
         images *= 255
 
@@ -188,6 +188,7 @@ def plot_images(images, targets, paths=None, fname='images.jpg', names=None, max
         # cv2.imwrite(fname, cv2.cvtColor(mosaic, cv2.COLOR_BGR2RGB))  # cv2 save
         Image.fromarray(mosaic).save(fname)  # PIL save
     return mosaic
+
 
 
 def plot_lr_scheduler(optimizer, scheduler, epochs=300, save_dir=''):
