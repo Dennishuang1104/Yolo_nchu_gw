@@ -8,19 +8,90 @@ import glob
 class DataPreProcessing:
     def __init__(self, kind_list: list):
         self.kind_list = kind_list
-        self.counts_data = 2500  # 拿幾張訓練
+        self.counts_data = 2501  # 拿幾張訓練
         self.img_type = 'jpg'
         self.file_type_list = ['images', 'labels']
         self.dataset_path = 'datasets/'
         self.diy_dataset_path = 'datasets/LabelsDIY'
         self.model_dataset_path = 'datasets/Transportation-train'
+        self.jaychou_dataset_path = 'datasets/Jaychou'
         self.diy_list = ["Emily", "Kuo", "Lara"]
         self.class_dict = {
-            "Car": 0,
-            "Bus": 1,
-            "Bicycle": 2,
-            "Motorcycle": 3
+            "Jaychou": 0
         }
+        # self.class_dict = {
+        #     "Car": 0,
+        #     "Bus": 1,
+        #     "Bicycle": 2,
+        #     "Motorcycle": 3
+        # }
+
+    def separate_chou_from_txt(self):
+        """
+        將標記好的資料進行切割成各檔案
+        :return:
+        """
+        input_file = "datasets/Jaychou-raw-data/train/_annotations.txt"  # 原始檔案名稱
+
+        with open(input_file, "r") as file:
+            lines = file.readlines()
+
+        # 遍歷每一行並處理內容
+        for line in lines:
+            parts = line.strip().split(" ")  # 分隔檔名與數字
+            raw_filename = parts[0]  # 取得原始檔案名稱
+
+            # 擷取 `jay_chou_XXX` 部分作為輸出檔名
+            filename_parts = raw_filename.split("_")
+
+            serial_number = filename_parts[2]  # 擷取序號部分
+            output_filename = f"./jay_chou_{serial_number}.txt"
+
+            # 移除檔名部分，保留數字
+            data = " ".join(parts[1:])  # 合併數字部分
+
+            # 建立對應的 .txt 檔案
+            with open(output_filename, "w") as outfile:
+                outfile.write(data)  # 將數字寫入新檔案
+
+    def rename_chou_images_name(self):
+        """
+        transform images jaychou images names
+        """
+        # 遍歷 Images 資料夾中的所有檔案
+        images_dir = self.jaychou_dataset_path + '/images'
+        for filename in os.listdir(images_dir):
+            # 檢查是否為檔案
+            if os.path.isfile(os.path.join(images_dir, filename)):
+                # 找到檔名前半部分（移除 ".rf.xxx.jpg" 部分）
+                new_name = "_".join(filename.split("_")[:3]).replace('jpg.jpg', 'jpg')
+                new_name = new_name.replace('jay_chou', 'Jaychou')
+
+                # 拼接完整路徑
+                old_path = os.path.join(images_dir, filename)
+                new_path = os.path.join(images_dir, new_name)
+
+                # 重新命名檔案
+                os.rename(old_path, new_path)
+                print(f"已將檔案重命名：{filename} -> {new_name}")
+
+        txt_dir = self.jaychou_dataset_path + '/annotations'
+        for filename in os.listdir(txt_dir):
+            # 檢查是否為檔案
+            if os.path.isfile(os.path.join(txt_dir, filename)):
+                # 找到檔名前半部分（移除 ".rf.xxx.jpg" 部分）
+                new_name = "_".join(filename.split("_")[:3]).replace('txt.txt', 'txt')
+                new_name = new_name.replace('jay_chou', 'Jaychou')
+
+                # 拼接完整路徑
+                old_path = os.path.join(txt_dir, filename)
+                new_path = os.path.join(txt_dir, new_name)
+
+                # 重新命名檔案
+                os.rename(old_path, new_path)
+                print(f"已將檔案重命名：{filename} -> {new_name}")
+
+        print("所有檔案已完成重命名！")
 
     def get_filenames(self, kind):
         # step 1 把Label 內.txt資料搬出來
@@ -207,7 +278,8 @@ class DataPreProcessing:
             lines = []
             with open(img_file, 'r') as file:  # read annotation.txt
                 for row in [x.split(' ') for x in file.read().strip().splitlines()]:
-                    cls = self.class_dict[str((row[0]))]
+                    # cls = self.class_dict[str((row[0]))]
+                    cls = str(0)
                     box = self.convert_box(img_size, tuple(map(float, row[1:5])))
                     lines.append(f"{cls} {' '.join(f'{x:.6f}' for x in box)}\n")
                     with open(str(img_file).replace(os.sep + 'annotations' + os.sep, os.sep + 'labels' + os.sep), 'w') as fl:
@@ -247,14 +319,14 @@ class DataPreProcessing:
         source_dir = self.diy_dataset_path
         target_dir = self.model_dataset_path
 
-        # for t in self.file_type_list:
-        #     full_source_dir = source_dir + "/" + t
-        #     full_target_dir = target_dir + "/" + t
-        #
-        #     for filename in os.listdir(full_source_dir):
-        #         source_path = os.path.join(full_source_dir, filename)
-        #         target_path = os.path.join(full_target_dir, filename)
-        #         shutil.copy(source_path, target_path)
+        for t in self.file_type_list:
+            full_source_dir = source_dir + "/" + t
+            full_target_dir = target_dir + "/" + t
+
+            for filename in os.listdir(full_source_dir):
+                source_path = os.path.join(full_source_dir, filename)
+                target_path = os.path.join(full_target_dir, filename)
+                shutil.copy(source_path, target_path)
 
 
 
