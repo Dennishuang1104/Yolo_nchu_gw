@@ -1,5 +1,5 @@
-train: datasets/Jaychou/images  # 訓練集圖片目錄（相對於 path）
-val: datasets/Jaychou/images    # 驗證集圖片目錄（相對於 path）
+train: datasets/Jaychou-train/images  # 訓練集圖片目錄（相對於 path）
+val: datasets/Jaychou-train/images    # 驗證集圖片目錄（相對於 path）
 
 nc: 2  # 類別數量 (car 和 bus)
 
