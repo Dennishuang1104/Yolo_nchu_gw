@@ -8,16 +8,19 @@ import glob
 class DataPreProcessing:
     def __init__(self, kind_list: list):
         self.kind_list = kind_list
-        self.counts_data = 2501  # 拿幾張訓練
+        self.counts_data = 550  # 拿幾張訓練
         self.img_type = 'jpg'
         self.file_type_list = ['images', 'labels']
         self.dataset_path = 'datasets/'
         self.diy_dataset_path = 'datasets/LabelsDIY'
-        self.model_dataset_path = 'datasets/Transportation-train'
-        self.jaychou_dataset_path = 'datasets/Jaychou'
-        self.diy_list = ["Emily", "Kuo", "Lara"]
+        # self.model_dataset_path = 'datasets/Transportation-train'
+        self.model_dataset_path = 'datasets/Jaychou-train'
+        # self.jaychou_dataset_path = 'datasets/Jaychou'
+        self.jaychou_dataset_path = 'datasets/FakeChou'
         self.class_dict = {
-            "Jaychou": 0
+            "Jaychou": 0,
+            "HumanFace": 1,
+            "FakeChou": 2
         }
         # self.class_dict = {
         #     "Car": 0,
@@ -63,15 +66,18 @@ class DataPreProcessing:
         for filename in os.listdir(images_dir):
             # 檢查是否為檔案
             if os.path.isfile(os.path.join(images_dir, filename)):
-                # 找到檔名前半部分（移除 ".rf.xxx.jpg" 部分）
-                new_name = "_".join(filename.split("_")[:3]).replace('jpg.jpg', 'jpg')
-                new_name = new_name.replace('jay_chou', 'Jaychou')
-
-                # 拼接完整路徑
+                # 找到檔名前半部分（移除 ".rf.xxx.jpg" 部分
+                new_name = filename.replace('fake_jay_chou', 'fake_jaychou')
+                new_name = "_".join(new_name.split("_")[:3]).replace('jpg.jpg', 'jpg')
+                # new_name = new_name + '.jpg'
+                # print(new_name)
+                # new_name = new_name.replace('fake_jay_chou', 'fake_jaychou')
+                #
+                # # 拼接完整路徑
                 old_path = os.path.join(images_dir, filename)
                 new_path = os.path.join(images_dir, new_name)
-
-                # 重新命名檔案
+                #
+                # # 重新命名檔案
                 os.rename(old_path, new_path)
                 print(f"已將檔案重命名：{filename} -> {new_name}")
 
@@ -80,8 +86,9 @@ class DataPreProcessing:
             # 檢查是否為檔案
             if os.path.isfile(os.path.join(txt_dir, filename)):
                 # 找到檔名前半部分（移除 ".rf.xxx.jpg" 部分）
-                new_name = "_".join(filename.split("_")[:3]).replace('txt.txt', 'txt')
-                new_name = new_name.replace('jay_chou', 'Jaychou')
+                new_name = filename.replace('fake_jay_chou', 'fake_jaychou')
+                new_name = "_".join(new_name.split("_")[:3]).replace('txt.txt', 'txt')
+                new_name = new_name + ".txt"
 
                 # 拼接完整路徑
                 old_path = os.path.join(txt_dir, filename)
@@ -278,12 +285,63 @@ class DataPreProcessing:
             lines = []
             with open(img_file, 'r') as file:  # read annotation.txt
                 for row in [x.split(' ') for x in file.read().strip().splitlines()]:
-                    # cls = self.class_dict[str((row[0]))]
-                    cls = str(0)
-                    box = self.convert_box(img_size, tuple(map(float, row[1:5])))
+                    if row[0] == "0":
+                        cls = "2"
+                    else:
+                        cls = "0"
+                    box = tuple(map(float, row[1:5]))
                     lines.append(f"{cls} {' '.join(f'{x:.6f}' for x in box)}\n")
                     with open(str(img_file).replace(os.sep + 'annotations' + os.sep, os.sep + 'labels' + os.sep), 'w') as fl:
                         fl.writelines(lines)  # write label.txt
+
+    def clean_files_name(self):
+        # 設定標記檔案的資料夾路徑
+        annotations_folder = "datasets/Human_face/annotations"
+        # 遍歷資料夾中的所有檔案
+        for filename in os.listdir(annotations_folder):
+            # 確保只處理標記檔案，例如 .txt 檔案
+            if filename.endswith(".txt"):
+                file_path = os.path.join(annotations_folder, filename)
+
+                # 讀取檔案內容
+                with open(file_path, "r") as file:
+                    lines = file.readlines()
+
+                # 處理每行內容
+                updated_lines = []
+                for line in lines:
+                    # 將 "Human face" 替換為 "Human_face"
+                    updated_line = line.replace("Human_face", "HumanFace")
+                    updated_lines.append(updated_line)
+
+                # 將修改後的內容寫回原檔案
+                with open(file_path, "w") as file:
+                    file.writelines(updated_lines)
+
+        print("所有檔案已成功處理！")
+
+    def relocated_file_name(self):
+        directory = "datasets/Human_face/images"
+
+        # 讀取目錄中的所有 .txt 檔案
+        txt_files = [f for f in os.listdir(directory) if f.endswith(".txt")]
+
+        # 排序檔案名稱（按字母或數字順序）
+        txt_files.sort()
+
+        # 依序重命名
+        for index, file in enumerate(txt_files):
+            # 新的檔案名稱，格式為 Human_face_XX.txt（補零到兩位數）
+            new_name = f"Human_face_{index:02d}.jpg"
+
+            # 獲取完整路徑
+            old_path = os.path.join(directory, file)
+            new_path = os.path.join(directory, new_name)
+
+            # 重命名檔案
+            os.rename(old_path, new_path)
+
+        print("檔案已重新命名完成！")
 
     def combine_and_split(self):
         """
@@ -319,14 +377,14 @@ class DataPreProcessing:
         source_dir = self.diy_dataset_path
         target_dir = self.model_dataset_path
 
-        for t in self.file_type_list:
-            full_source_dir = source_dir + "/" + t
-            full_target_dir = target_dir + "/" + t
-
-            for filename in os.listdir(full_source_dir):
-                source_path = os.path.join(full_source_dir, filename)
-                target_path = os.path.join(full_target_dir, filename)
-                shutil.copy(source_path, target_path)
+        # for t in self.file_type_list:
+        #     full_source_dir = source_dir + "/" + t
+        #     full_target_dir = target_dir + "/" + t
+        #
+        #     for filename in os.listdir(full_source_dir):
+        #         source_path = os.path.join(full_source_dir, filename)
+        #         target_path = os.path.join(full_target_dir, filename)
+        #         shutil.copy(source_path, target_path)
 
 
 
