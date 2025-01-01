@@ -8,9 +8,9 @@ from PIL import Image
 def check_loop_pic_datasets(kind):
     qa_list = []
     for id_ in range(8, 7293):
-        if id_ < 100:
-            image_path = f'../datasets/Jaychou/images/Jaychou_{id_}.jpg'
-            label_path = f'../datasets/Jaychou/labels/Jaychou_{id_}.txt'
+        if id_ < 10:
+            image_path = f'../datasets/Fakechou/images/Fakechou_0{id_}.jpg'
+            label_path = f'../datasets/Fakechou/labels/Fakechou_0{id_}.txt'
         else:
             image_path = f'../datasets/{kind}/images/{kind}_{id_}.jpg'
             label_path = f'../datasets/{kind}/labels/{kind}_{id_}.txt'
@@ -55,4 +55,4 @@ def check_loop_pic_datasets(kind):
 
 
 if __name__ == '__main__':
-    check_loop_pic_datasets(kind='Jaychou')
+    check_loop_pic_datasets(kind='Fakechou')
