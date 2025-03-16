@@ -1,0 +1,8 @@
+path: ../datasets
+train: Transportation-train/images
+val: Transportation-train/images
+test: Transportation-train/images
+names:
+  0: Jaychou
+  1: HumanFace
+  2: Fakechou

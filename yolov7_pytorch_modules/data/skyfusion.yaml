@@ -1,0 +1,5 @@
+train: datasets/Iww/images
+val: datasets/Iww/images
+
+nc: 3
+names: ["Aircraft", "ship", "vehicle"]
