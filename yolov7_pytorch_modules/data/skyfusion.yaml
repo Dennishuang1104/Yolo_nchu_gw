@@ -1,5 +1,5 @@
 train: ../datasets/Iww/images
-val: ../datasets/Iww/images
+val: ../datasets/Iww_val/images
 
 nc: 3
 names: ["Aircraft", "ship", "vehicle"]
